@@ -33,7 +33,9 @@ export const onDocumentWrite = onDocumentWritten(
           description: "Details of the inquiry",
           fields: Object.entries(data || {}).map(([key, value]) => ({
             name: key,
-            value: String(value),
+            value: value instanceof Date ?
+              value.toLocaleString("en-US", {timeZone: "Asia/Tokyo"}) :
+              String(value),
             inline: true,
           })),
         },
