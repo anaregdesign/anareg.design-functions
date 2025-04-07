@@ -6,15 +6,39 @@ import * as functions from "firebase-functions/v2";
 
 initializeApp();
 
+functions.setGlobalOptions({
+  region: "asia-northeast1",
+  secrets: ["DISCORD_WEBHOOK_INQUIRIES"],
+});
+
 export const onDocumentWrite = onDocumentWritten(
   {
     document: "inquiries/{documentId}",
-    region: "asia-northeast1",
   },
   async (event) => {
     const data = event.data?.after?.data();
 
-    const webhookUrl = functions.config().discord.webhook.inquiries;
+    const webhookUrl = process.env.DISCORD_WEBHOOK_INQUIRIES;
+    if (!webhookUrl) {
+      logger.error("DISCORD_WEBHOOK_INQUIRIES is not set");
+      return;
+    }
+
+    const payload = {
+      content: "New inquiry received",
+      username: "Inquiry Bot",
+      embeds: [
+        {
+          title: "New Inquiry",
+          description: "Details of the inquiry",
+          fields: Object.entries(data || {}).map(([key, value]) => ({
+            name: key,
+            value: String(value),
+            inline: true,
+          })),
+        },
+      ],
+    };
 
     try {
       const response = await fetch(webhookUrl, {
@@ -22,7 +46,7 @@ export const onDocumentWrite = onDocumentWritten(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
