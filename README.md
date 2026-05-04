@@ -12,18 +12,21 @@ Delete events are intentionally ignored.
 
 ```mermaid
 flowchart LR
-  Firestore["Firestore inquiries/{documentId}"] --> Publisher["onDocumentWrite publisher"]
+  Firestore["Firestore inquiries/{documentId}"] --> Publisher["publisherFirestoreInquiryEvents"]
   Publisher --> PubSub["Pub/Sub inquiries-events-v1"]
-  PubSub --> Subscriber["postInquiryToDiscord subscriber"]
+  PubSub --> Subscriber["subscriberDiscordInquiryEvents"]
   Subscriber --> Discord["Discord webhook"]
 ```
 
 ## Functions
 
-- `onDocumentWrite`: Firestore publisher. The export name is preserved to
-  avoid an implicit production function rename.
-- `postInquiryToDiscord`: Pub/Sub subscriber that reads
+- `publisherFirestoreInquiryEvents`: Firestore publisher that writes
+  normalized notification messages to `inquiries-events-v1`.
+- `subscriberDiscordInquiryEvents`: Pub/Sub subscriber that reads
   `inquiries-events-v1` and posts to Discord.
+
+Runtime naming rules are part of the system specification:
+[docs/spec/system.md](docs/spec/system.md).
 
 ## Delivery semantics
 
@@ -115,6 +118,13 @@ firebase functions:secrets:set DISCORD_WEBHOOK_INQUIRIES \
 The workflow in `.github/workflows/firebase-functions.yml` runs CI on PR and
 push. Pushes to `main` deploy Firebase Functions with Workload Identity
 Federation.
+
+Individual runtime deploys use the role-prefixed Function names:
+
+```sh
+firebase deploy --only functions:publisherFirestoreInquiryEvents
+firebase deploy --only functions:subscriberDiscordInquiryEvents
+```
 
 Configure these GitHub repository variables:
 

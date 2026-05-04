@@ -1,0 +1,62 @@
+# anareg.design-messaging System Specification
+
+## Runtime naming
+
+Messaging runtimes must make their role clear from the deployed runtime name.
+Use the same role terms in Firebase Function exports, file paths, logs, docs,
+and deployment commands.
+
+### Runtime name format
+
+Use this format for deployed Firebase Function export names:
+
+```text
+<role><SourceOrDestination><Domain>Events
+```
+
+Rules:
+
+- `<role>` must be `publisher` or `subscriber`.
+- `publisher` means the runtime receives a source-system event and publishes a
+  normalized notification message to Pub/Sub.
+- `subscriber` means the runtime receives a Pub/Sub notification message and
+  delivers it to a target platform or performs downstream processing.
+- `<SourceOrDestination>` names the external system closest to the runtime
+  boundary, for example `Firestore` or `Discord`.
+- `<Domain>` names the business event domain, for example `Inquiry`.
+- Use plural `Events` for notification streams so one runtime can handle both
+  create and update events in the same domain.
+
+Current runtimes:
+
+- `publisherFirestoreInquiryEvents`: Firestore `inquiries/{documentId}`
+  create/update event publisher for Pub/Sub topic `inquiries-events-v1`.
+- `subscriberDiscordInquiryEvents`: Pub/Sub subscriber that delivers inquiry
+  notifications to Discord.
+
+Do not use trigger-only names such as `onDocumentWrite` for deployed runtimes.
+They hide whether the runtime is a publisher or subscriber.
+
+### Directory ownership
+
+Runtime files must mirror the role in the directory name:
+
+- `functions/src/publishers/*`: source-system event handlers that publish to
+  Pub/Sub.
+- `functions/src/subscribers/*`: Pub/Sub consumers that deliver to downstream
+  systems.
+- `functions/src/shared/*`: payload contracts, serializers, and helpers that
+  are shared by both roles.
+
+### Deployment targeting
+
+The default release deploys all Functions in the Firebase codebase. Individual
+runtime deploys must use the role-prefixed export names:
+
+```sh
+firebase deploy --only functions:publisherFirestoreInquiryEvents
+firebase deploy --only functions:subscriberDiscordInquiryEvents
+```
+
+When a runtime is renamed, the previous Firebase Function name is considered
+obsolete and may be deleted during release.

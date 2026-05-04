@@ -11,7 +11,7 @@ import {
 } from "../shared/inquiryEvent";
 import {publishJsonMessage} from "../shared/pubsub";
 
-export const onDocumentWrite = onDocumentWritten(
+export const publisherFirestoreInquiryEvents = onDocumentWritten(
   {
     document: INQUIRIES_DOCUMENT_PATH,
     retry: true,
