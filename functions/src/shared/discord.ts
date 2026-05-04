@@ -1,4 +1,7 @@
-import {InquiryEventEnvelopeV1} from "./inquiryEvent";
+import {
+  InquiryEventEnvelopeV1,
+  LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE,
+} from "./inquiryEvent";
 import {JsonValue} from "./json";
 
 const DISCORD_FIELD_NAME_LIMIT = 256;
@@ -41,7 +44,8 @@ export class DiscordWebhookError extends Error {
 export function buildDiscordInquiryPayload(
   event: InquiryEventEnvelopeV1
 ): DiscordWebhookPayload {
-  const isCreated = event.type === "inquiry.created";
+  const isCreated =
+    event.messageType === LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE;
   const fields = buildInquiryFields(event);
 
   return {
@@ -105,18 +109,13 @@ function buildInquiryFields(
 ): DiscordEmbedField[] {
   const baseFields: DiscordEmbedField[] = [
     {
-      name: "eventType",
-      value: event.type,
+      name: "messageType",
+      value: event.messageType,
       inline: true,
     },
     {
       name: "documentId",
       value: event.data.documentId,
-      inline: true,
-    },
-    {
-      name: "target",
-      value: event.target,
       inline: true,
     },
   ];

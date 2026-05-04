@@ -22,13 +22,12 @@ test("buildInquiryEventEnvelope builds created inquiry events", () => {
   assert.deepEqual(event, {
     schemaVersion: "1",
     id: "event-1",
-    type: "inquiry.created",
+    messageType: "lp.customerInquiry.created",
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
-    target: "*",
     notification: {
-      title: "New Inquiry",
+      title: "New Customer Inquiry",
       body: "inquiries/inquiry-1",
     },
     metadata: {
@@ -64,13 +63,12 @@ test("getInquiryEventAttributes returns stable Pub/Sub attributes", () => {
   const event = parseInquiryEventEnvelope({
     schemaVersion: "1",
     id: "event-1",
-    type: "inquiry.updated",
+    messageType: "lp.customerInquiry.updated",
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
-    target: "*",
     notification: {
-      title: "Updated Inquiry",
+      title: "Updated Customer Inquiry",
       body: "inquiries/inquiry-1",
     },
     metadata: {
@@ -91,10 +89,9 @@ test("getInquiryEventAttributes returns stable Pub/Sub attributes", () => {
 
   assert.deepEqual(getInquiryEventAttributes(event), {
     schemaVersion: "1",
-    eventType: "inquiry.updated",
+    messageType: "lp.customerInquiry.updated",
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
-    target: "*",
     correlationId: "event-1",
     deduplicationKey: "firestore.inquiries:event-1",
     documentId: "inquiry-1",

@@ -1,7 +1,6 @@
 import {INQUIRY_EVENT_SOURCE} from "./config";
 import {JsonObject, serializeFirestoreData} from "./json";
 import {
-  DEFAULT_NOTIFICATION_TARGET,
   NOTIFICATION_SCHEMA_VERSION,
   NotificationEnvelopeV1,
   assertNotificationEnvelope,
@@ -9,7 +8,14 @@ import {
   getNotificationAttributes,
 } from "./notification";
 
-export type InquiryEventType = "inquiry.created" | "inquiry.updated";
+export const LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE =
+  "lp.customerInquiry.created";
+export const LP_CUSTOMER_INQUIRY_UPDATED_MESSAGE_TYPE =
+  "lp.customerInquiry.updated";
+
+export type InquiryMessageType =
+  typeof LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE |
+  typeof LP_CUSTOMER_INQUIRY_UPDATED_MESSAGE_TYPE;
 
 interface InquiryEventData extends JsonObject {
   documentId: string;
@@ -19,7 +25,7 @@ interface InquiryEventData extends JsonObject {
 
 export type InquiryEventEnvelopeV1 =
   NotificationEnvelopeV1<InquiryEventData> & {
-    type: InquiryEventType;
+    messageType: InquiryMessageType;
     source: typeof INQUIRY_EVENT_SOURCE;
   };
 
@@ -41,21 +47,22 @@ export function buildInquiryEventEnvelope(
 
   const before = input.before ? serializeFirestoreData(input.before) : null;
   const after = serializeFirestoreData(input.after);
-  const eventType = before ? "inquiry.updated" : "inquiry.created";
+  const messageType = before ?
+    LP_CUSTOMER_INQUIRY_UPDATED_MESSAGE_TYPE :
+    LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE;
   const subject = `inquiries/${input.documentId}`;
 
   return {
     schemaVersion: NOTIFICATION_SCHEMA_VERSION,
     id: input.eventId,
-    type: eventType,
+    messageType,
     source: INQUIRY_EVENT_SOURCE,
     subject,
     time: input.eventTime ?? new Date().toISOString(),
-    target: DEFAULT_NOTIFICATION_TARGET,
     notification: {
-      title: eventType === "inquiry.created" ?
-        "New Inquiry" :
-        "Updated Inquiry",
+      title: messageType === LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE ?
+        "New Customer Inquiry" :
+        "Updated Customer Inquiry",
       body: subject,
     },
     metadata: buildNotificationMetadata({
@@ -85,8 +92,8 @@ export function parseInquiryEventEnvelope(
 ): InquiryEventEnvelopeV1 {
   assertNotificationEnvelope(value);
 
-  if (value.type !== "inquiry.created" && value.type !== "inquiry.updated") {
-    throw new Error(`Unsupported inquiry event type: ${value.type}`);
+  if (!isInquiryMessageType(value.messageType)) {
+    throw new Error(`Unsupported inquiry message type: ${value.messageType}`);
   }
 
   if (!isRecord(value.data) || !isRecord(value.data.after)) {
@@ -94,6 +101,13 @@ export function parseInquiryEventEnvelope(
   }
 
   return value as unknown as InquiryEventEnvelopeV1;
+}
+
+export function isInquiryMessageType(
+  messageType: string
+): messageType is InquiryMessageType {
+  return messageType === LP_CUSTOMER_INQUIRY_CREATED_MESSAGE_TYPE ||
+    messageType === LP_CUSTOMER_INQUIRY_UPDATED_MESSAGE_TYPE;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

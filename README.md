@@ -45,13 +45,12 @@ shared across platforms and expanded without changing every publisher.
 {
   "schemaVersion": "1",
   "id": "source-event-id",
-  "type": "inquiry.created",
+  "messageType": "lp.customerInquiry.created",
   "source": "firestore.inquiries",
   "subject": "inquiries/{documentId}",
   "time": "2026-05-04T12:00:00.000Z",
-  "target": "*",
   "notification": {
-    "title": "New Inquiry",
+    "title": "New Customer Inquiry",
     "body": "inquiries/{documentId}"
   },
   "metadata": {
@@ -67,10 +66,10 @@ shared across platforms and expanded without changing every publisher.
 }
 ```
 
-`target` is a routing key for future subscriber behavior. Current Firestore
-inquiry events are published with `target: "*"`, and the Discord subscriber
-processes only `*`. Future targets can be used to route to different Discord
-channels or other notification platforms.
+`messageType` is the subscription key for destination configuration. Current
+Firestore inquiry events from the LP are published as
+`lp.customerInquiry.created` or `lp.customerInquiry.updated`. The Discord
+subscriber currently handles these customer inquiry message types.
 
 ## Local commands
 

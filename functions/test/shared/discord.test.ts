@@ -8,13 +8,12 @@ test("buildDiscordInquiryPayload formats created inquiry messages", () => {
   const event: InquiryEventEnvelopeV1 = {
     schemaVersion: "1",
     id: "event-1",
-    type: "inquiry.created",
+    messageType: "lp.customerInquiry.created",
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
-    target: "*",
     notification: {
-      title: "New Inquiry",
+      title: "New Customer Inquiry",
       body: "inquiries/inquiry-1",
     },
     metadata: {
@@ -36,21 +35,16 @@ test("buildDiscordInquiryPayload formats created inquiry messages", () => {
 
   assert.equal(payload.content, "Inquiry created");
   assert.equal(payload.username, "Inquiry Bot");
-  assert.equal(payload.embeds[0].title, "New Inquiry");
-  assert.deepEqual(payload.embeds[0].fields.slice(0, 5), [
+  assert.equal(payload.embeds[0].title, "New Customer Inquiry");
+  assert.deepEqual(payload.embeds[0].fields.slice(0, 4), [
     {
-      name: "eventType",
-      value: "inquiry.created",
+      name: "messageType",
+      value: "lp.customerInquiry.created",
       inline: true,
     },
     {
       name: "documentId",
       value: "inquiry-1",
-      inline: true,
-    },
-    {
-      name: "target",
-      value: "*",
       inline: true,
     },
     {
@@ -70,13 +64,12 @@ test("buildDiscordInquiryPayload truncates long field values", () => {
   const event: InquiryEventEnvelopeV1 = {
     schemaVersion: "1",
     id: "event-1",
-    type: "inquiry.updated",
+    messageType: "lp.customerInquiry.updated",
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
-    target: "*",
     notification: {
-      title: "Updated Inquiry",
+      title: "Updated Customer Inquiry",
       body: "inquiries/inquiry-1",
     },
     metadata: {
@@ -101,7 +94,7 @@ test("buildDiscordInquiryPayload truncates long field values", () => {
   });
 
   assert.equal(payload.content, "Inquiry updated");
-  assert.equal(payload.embeds[0].title, "Updated Inquiry");
+  assert.equal(payload.embeds[0].title, "Updated Customer Inquiry");
   assert.equal(messageField?.value.length, 1024);
   assert.equal(messageField?.value.endsWith("..."), true);
 });

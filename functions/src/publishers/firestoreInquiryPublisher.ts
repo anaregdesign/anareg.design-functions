@@ -43,9 +43,9 @@ export const publisherFirestoreInquiryEvents = onDocumentWritten(
       getInquiryEventAttributes(inquiryEvent)
     );
 
-    logger.info("Published inquiry event", {
+    logger.info("Published inquiry message", {
       eventId: inquiryEvent.id,
-      eventType: inquiryEvent.type,
+      messageType: inquiryEvent.messageType,
       documentId,
       messageId,
       topic: INQUIRY_EVENTS_TOPIC,

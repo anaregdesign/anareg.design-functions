@@ -1,16 +1,14 @@
 import {JsonObject} from "./json";
 
 export const NOTIFICATION_SCHEMA_VERSION = "1";
-export const DEFAULT_NOTIFICATION_TARGET = "*";
 
 export interface NotificationEnvelopeV1<TData extends JsonObject> {
   schemaVersion: typeof NOTIFICATION_SCHEMA_VERSION;
   id: string;
-  type: string;
+  messageType: string;
   source: string;
   subject: string;
   time: string;
-  target: string;
   notification: {
     title: string;
     body: string;
@@ -41,10 +39,9 @@ export function getNotificationAttributes(
 ): Record<string, string> {
   return {
     schemaVersion: event.schemaVersion,
-    eventType: event.type,
+    messageType: event.messageType,
     source: event.source,
     subject: event.subject,
-    target: event.target,
     correlationId: event.metadata.correlationId,
     deduplicationKey: event.metadata.deduplicationKey,
   };
@@ -65,11 +62,10 @@ export function assertNotificationEnvelope(
 
   if (
     typeof value.id !== "string" ||
-    typeof value.type !== "string" ||
+    typeof value.messageType !== "string" ||
     typeof value.source !== "string" ||
     typeof value.subject !== "string" ||
-    typeof value.time !== "string" ||
-    typeof value.target !== "string"
+    typeof value.time !== "string"
   ) {
     throw new Error("Notification envelope is missing required fields");
   }

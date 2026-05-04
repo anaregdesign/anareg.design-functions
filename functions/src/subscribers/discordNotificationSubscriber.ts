@@ -13,9 +13,9 @@ import {
 } from "../shared/discord";
 import {
   InquiryEventEnvelopeV1,
+  isInquiryMessageType,
   parseInquiryEventEnvelope,
 } from "../shared/inquiryEvent";
-import {DEFAULT_NOTIFICATION_TARGET} from "../shared/notification";
 
 const discordWebhookInquiries = defineSecret(DISCORD_WEBHOOK_INQUIRIES);
 
@@ -27,16 +27,19 @@ export const subscriberDiscordNotifications =
       retry: true,
     },
     async (event) => {
-      const inquiryEvent = parseInquiryEventEnvelope(event.data.message.json);
-      const webhookUrl = discordWebhookInquiries.value();
+      const rawMessage = event.data.message.json;
 
-      if (inquiryEvent.target !== DEFAULT_NOTIFICATION_TARGET) {
-        logger.info("Skipping inquiry event for unsupported Discord target", {
-          eventId: inquiryEvent.id,
-          target: inquiryEvent.target,
+      if (isTypedNotification(rawMessage) &&
+        !isInquiryMessageType(rawMessage.messageType)) {
+        logger.info("Skipping unsupported Discord message type", {
+          eventId: rawMessage.id,
+          messageType: rawMessage.messageType,
         });
         return;
       }
+
+      const inquiryEvent = parseInquiryEventEnvelope(rawMessage);
+      const webhookUrl = discordWebhookInquiries.value();
 
       if (!webhookUrl) {
         throw new Error(`${DISCORD_WEBHOOK_INQUIRIES} is not set`);
@@ -51,7 +54,7 @@ export const subscriberDiscordNotifications =
           logger.error("Discord webhook rejected inquiry event permanently", {
             eventId: inquiryEvent.id,
             documentId: inquiryEvent.data.documentId,
-            target: inquiryEvent.target,
+            messageType: inquiryEvent.messageType,
             status: error.status,
             error: error.message,
           });
@@ -61,7 +64,7 @@ export const subscriberDiscordNotifications =
         logger.error("Discord webhook failed for inquiry event", {
           eventId: inquiryEvent.id,
           documentId: inquiryEvent.data.documentId,
-          target: inquiryEvent.target,
+          messageType: inquiryEvent.messageType,
           error,
         });
         throw error;
@@ -69,9 +72,19 @@ export const subscriberDiscordNotifications =
 
       logger.info("Posted inquiry event to Discord", {
         eventId: inquiryEvent.id,
-        eventType: inquiryEvent.type,
+        messageType: inquiryEvent.messageType,
         documentId: inquiryEvent.data.documentId,
-        target: inquiryEvent.target,
       });
     }
   );
+
+function isTypedNotification(value: unknown): value is {
+  id: string;
+  messageType: string;
+} {
+  return typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).id === "string" &&
+    typeof (value as Record<string, unknown>).messageType === "string";
+}
