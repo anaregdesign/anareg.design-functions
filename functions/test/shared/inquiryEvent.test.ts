@@ -11,6 +11,7 @@ test("buildInquiryEventEnvelope builds created inquiry events", () => {
   const event = buildInquiryEventEnvelope({
     eventId: "event-1",
     eventTime: "2026-05-04T12:00:00.000Z",
+    producedAt: "2026-05-04T12:00:01.000Z",
     documentId: "inquiry-1",
     before: undefined,
     after: {
@@ -25,6 +26,16 @@ test("buildInquiryEventEnvelope builds created inquiry events", () => {
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
+    target: "*",
+    notification: {
+      title: "New Inquiry",
+      body: "inquiries/inquiry-1",
+    },
+    metadata: {
+      correlationId: "event-1",
+      deduplicationKey: "firestore.inquiries:event-1",
+      producedAt: "2026-05-04T12:00:01.000Z",
+    },
     data: {
       documentId: "inquiry-1",
       before: null,
@@ -57,6 +68,16 @@ test("getInquiryEventAttributes returns stable Pub/Sub attributes", () => {
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
+    target: "*",
+    notification: {
+      title: "Updated Inquiry",
+      body: "inquiries/inquiry-1",
+    },
+    metadata: {
+      correlationId: "event-1",
+      deduplicationKey: "firestore.inquiries:event-1",
+      producedAt: "2026-05-04T12:00:01.000Z",
+    },
     data: {
       documentId: "inquiry-1",
       before: {
@@ -72,6 +93,10 @@ test("getInquiryEventAttributes returns stable Pub/Sub attributes", () => {
     schemaVersion: "1",
     eventType: "inquiry.updated",
     source: "firestore.inquiries",
+    subject: "inquiries/inquiry-1",
+    target: "*",
+    correlationId: "event-1",
+    deduplicationKey: "firestore.inquiries:event-1",
     documentId: "inquiry-1",
   });
 });

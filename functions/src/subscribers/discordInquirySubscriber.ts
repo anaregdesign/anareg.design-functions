@@ -15,6 +15,7 @@ import {
   InquiryEventEnvelopeV1,
   parseInquiryEventEnvelope,
 } from "../shared/inquiryEvent";
+import {DEFAULT_NOTIFICATION_TARGET} from "../shared/notification";
 
 const discordWebhookInquiries = defineSecret(DISCORD_WEBHOOK_INQUIRIES);
 
@@ -27,6 +28,14 @@ export const postInquiryToDiscord = onMessagePublished<InquiryEventEnvelopeV1>(
   async (event) => {
     const inquiryEvent = parseInquiryEventEnvelope(event.data.message.json);
     const webhookUrl = discordWebhookInquiries.value();
+
+    if (inquiryEvent.target !== DEFAULT_NOTIFICATION_TARGET) {
+      logger.info("Skipping inquiry event for unsupported Discord target", {
+        eventId: inquiryEvent.id,
+        target: inquiryEvent.target,
+      });
+      return;
+    }
 
     if (!webhookUrl) {
       throw new Error(`${DISCORD_WEBHOOK_INQUIRIES} is not set`);
@@ -41,6 +50,7 @@ export const postInquiryToDiscord = onMessagePublished<InquiryEventEnvelopeV1>(
         logger.error("Discord webhook rejected inquiry event permanently", {
           eventId: inquiryEvent.id,
           documentId: inquiryEvent.data.documentId,
+          target: inquiryEvent.target,
           status: error.status,
           error: error.message,
         });
@@ -50,6 +60,7 @@ export const postInquiryToDiscord = onMessagePublished<InquiryEventEnvelopeV1>(
       logger.error("Discord webhook failed for inquiry event", {
         eventId: inquiryEvent.id,
         documentId: inquiryEvent.data.documentId,
+        target: inquiryEvent.target,
         error,
       });
       throw error;
@@ -59,6 +70,7 @@ export const postInquiryToDiscord = onMessagePublished<InquiryEventEnvelopeV1>(
       eventId: inquiryEvent.id,
       eventType: inquiryEvent.type,
       documentId: inquiryEvent.data.documentId,
+      target: inquiryEvent.target,
     });
   }
 );

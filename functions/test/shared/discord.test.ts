@@ -12,6 +12,16 @@ test("buildDiscordInquiryPayload formats created inquiry messages", () => {
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
+    target: "*",
+    notification: {
+      title: "New Inquiry",
+      body: "inquiries/inquiry-1",
+    },
+    metadata: {
+      correlationId: "event-1",
+      deduplicationKey: "firestore.inquiries:event-1",
+      producedAt: "2026-05-04T12:00:01.000Z",
+    },
     data: {
       documentId: "inquiry-1",
       before: null,
@@ -27,7 +37,7 @@ test("buildDiscordInquiryPayload formats created inquiry messages", () => {
   assert.equal(payload.content, "Inquiry created");
   assert.equal(payload.username, "Inquiry Bot");
   assert.equal(payload.embeds[0].title, "New Inquiry");
-  assert.deepEqual(payload.embeds[0].fields.slice(0, 4), [
+  assert.deepEqual(payload.embeds[0].fields.slice(0, 5), [
     {
       name: "eventType",
       value: "inquiry.created",
@@ -36,6 +46,11 @@ test("buildDiscordInquiryPayload formats created inquiry messages", () => {
     {
       name: "documentId",
       value: "inquiry-1",
+      inline: true,
+    },
+    {
+      name: "target",
+      value: "*",
       inline: true,
     },
     {
@@ -59,6 +74,16 @@ test("buildDiscordInquiryPayload truncates long field values", () => {
     source: "firestore.inquiries",
     subject: "inquiries/inquiry-1",
     time: "2026-05-04T12:00:00.000Z",
+    target: "*",
+    notification: {
+      title: "Updated Inquiry",
+      body: "inquiries/inquiry-1",
+    },
+    metadata: {
+      correlationId: "event-1",
+      deduplicationKey: "firestore.inquiries:event-1",
+      producedAt: "2026-05-04T12:00:01.000Z",
+    },
     data: {
       documentId: "inquiry-1",
       before: {

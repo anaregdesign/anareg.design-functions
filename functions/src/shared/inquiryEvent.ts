@@ -1,27 +1,32 @@
 import {INQUIRY_EVENT_SOURCE} from "./config";
 import {JsonObject, serializeFirestoreData} from "./json";
-
-export const INQUIRY_EVENT_SCHEMA_VERSION = "1";
+import {
+  DEFAULT_NOTIFICATION_TARGET,
+  NOTIFICATION_SCHEMA_VERSION,
+  NotificationEnvelopeV1,
+  assertNotificationEnvelope,
+  buildNotificationMetadata,
+  getNotificationAttributes,
+} from "./notification";
 
 export type InquiryEventType = "inquiry.created" | "inquiry.updated";
 
-export interface InquiryEventEnvelopeV1 {
-  schemaVersion: typeof INQUIRY_EVENT_SCHEMA_VERSION;
-  id: string;
-  type: InquiryEventType;
-  source: typeof INQUIRY_EVENT_SOURCE;
-  subject: string;
-  time: string;
-  data: {
-    documentId: string;
-    before: JsonObject | null;
-    after: JsonObject;
-  };
+interface InquiryEventData extends JsonObject {
+  documentId: string;
+  before: JsonObject | null;
+  after: JsonObject;
 }
+
+export type InquiryEventEnvelopeV1 =
+  NotificationEnvelopeV1<InquiryEventData> & {
+    type: InquiryEventType;
+    source: typeof INQUIRY_EVENT_SOURCE;
+  };
 
 interface BuildInquiryEventEnvelopeInput {
   eventId: string;
   eventTime: string | undefined;
+  producedAt?: string;
   documentId: string;
   before: Record<string, unknown> | undefined;
   after: Record<string, unknown> | undefined;
@@ -36,14 +41,28 @@ export function buildInquiryEventEnvelope(
 
   const before = input.before ? serializeFirestoreData(input.before) : null;
   const after = serializeFirestoreData(input.after);
+  const eventType = before ? "inquiry.updated" : "inquiry.created";
+  const subject = `inquiries/${input.documentId}`;
 
   return {
-    schemaVersion: INQUIRY_EVENT_SCHEMA_VERSION,
+    schemaVersion: NOTIFICATION_SCHEMA_VERSION,
     id: input.eventId,
-    type: before ? "inquiry.updated" : "inquiry.created",
+    type: eventType,
     source: INQUIRY_EVENT_SOURCE,
-    subject: `inquiries/${input.documentId}`,
+    subject,
     time: input.eventTime ?? new Date().toISOString(),
+    target: DEFAULT_NOTIFICATION_TARGET,
+    notification: {
+      title: eventType === "inquiry.created" ?
+        "New Inquiry" :
+        "Updated Inquiry",
+      body: subject,
+    },
+    metadata: buildNotificationMetadata({
+      id: input.eventId,
+      source: INQUIRY_EVENT_SOURCE,
+      producedAt: input.producedAt,
+    }),
     data: {
       documentId: input.documentId,
       before,
@@ -56,9 +75,7 @@ export function getInquiryEventAttributes(
   event: InquiryEventEnvelopeV1
 ): Record<string, string> {
   return {
-    schemaVersion: event.schemaVersion,
-    eventType: event.type,
-    source: event.source,
+    ...getNotificationAttributes(event),
     documentId: event.data.documentId,
   };
 }
@@ -66,13 +83,7 @@ export function getInquiryEventAttributes(
 export function parseInquiryEventEnvelope(
   value: unknown
 ): InquiryEventEnvelopeV1 {
-  if (!isRecord(value)) {
-    throw new Error("Pub/Sub message is not a JSON object");
-  }
-
-  if (value.schemaVersion !== INQUIRY_EVENT_SCHEMA_VERSION) {
-    throw new Error(`Unsupported inquiry event schema: ${value.schemaVersion}`);
-  }
+  assertNotificationEnvelope(value);
 
   if (value.type !== "inquiry.created" && value.type !== "inquiry.updated") {
     throw new Error(`Unsupported inquiry event type: ${value.type}`);

@@ -49,12 +49,12 @@ export function buildDiscordInquiryPayload(
     username: "Inquiry Bot",
     embeds: [
       {
-        title: isCreated ? "New Inquiry" : "Updated Inquiry",
-        description: event.subject,
+        title: event.notification.title,
+        description: event.notification.body,
         timestamp: event.time,
         fields,
         footer: {
-          text: `eventId: ${event.id}`,
+          text: `deduplicationKey: ${event.metadata.deduplicationKey}`,
         },
       },
     ],
@@ -112,6 +112,11 @@ function buildInquiryFields(
     {
       name: "documentId",
       value: event.data.documentId,
+      inline: true,
+    },
+    {
+      name: "target",
+      value: event.target,
       inline: true,
     },
   ];

@@ -32,6 +32,42 @@ Messages include a stable `id` from the source event, so downstream
 subscribers can add deduplication if needed. Exactly-once Discord posting is
 not guaranteed.
 
+## Notification payload
+
+Pub/Sub messages use a common notification envelope so subscribers can be
+shared across platforms and expanded without changing every publisher.
+
+```json
+{
+  "schemaVersion": "1",
+  "id": "source-event-id",
+  "type": "inquiry.created",
+  "source": "firestore.inquiries",
+  "subject": "inquiries/{documentId}",
+  "time": "2026-05-04T12:00:00.000Z",
+  "target": "*",
+  "notification": {
+    "title": "New Inquiry",
+    "body": "inquiries/{documentId}"
+  },
+  "metadata": {
+    "correlationId": "source-event-id",
+    "deduplicationKey": "firestore.inquiries:source-event-id",
+    "producedAt": "2026-05-04T12:00:01.000Z"
+  },
+  "data": {
+    "documentId": "{documentId}",
+    "before": null,
+    "after": {}
+  }
+}
+```
+
+`target` is a routing key for future subscriber behavior. Current Firestore
+inquiry events are published with `target: "*"`, and the Discord subscriber
+processes only `*`. Future targets can be used to route to different Discord
+channels or other notification platforms.
+
 ## Local commands
 
 Run commands from `functions/`.
