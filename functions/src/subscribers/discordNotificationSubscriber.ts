@@ -19,7 +19,7 @@ import {DEFAULT_NOTIFICATION_TARGET} from "../shared/notification";
 
 const discordWebhookInquiries = defineSecret(DISCORD_WEBHOOK_INQUIRIES);
 
-export const subscriberDiscordInquiryEvents =
+export const subscriberDiscordNotifications =
   onMessagePublished<InquiryEventEnvelopeV1>(
     {
       topic: INQUIRY_EVENTS_TOPIC,

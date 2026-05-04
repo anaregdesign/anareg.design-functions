@@ -13,5 +13,5 @@ export {
   publisherFirestoreInquiryEvents,
 } from "./publishers/firestoreInquiryPublisher";
 export {
-  subscriberDiscordInquiryEvents,
-} from "./subscribers/discordInquirySubscriber";
+  subscriberDiscordNotifications,
+} from "./subscribers/discordNotificationSubscriber";
