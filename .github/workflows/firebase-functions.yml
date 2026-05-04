@@ -71,4 +71,4 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Deploy Firebase Functions
-        run: ./functions/node_modules/.bin/firebase deploy --only functions --project "${{ vars.GCP_PROJECT_ID }}"
+        run: ./functions/node_modules/.bin/firebase deploy --only functions --project "${{ vars.GCP_PROJECT_ID }}" --force
