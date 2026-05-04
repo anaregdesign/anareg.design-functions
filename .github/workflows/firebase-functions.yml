@@ -63,12 +63,24 @@ jobs:
         run: npm ci
         working-directory: functions
 
+      - name: Validate deployment configuration
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT || secrets.GCP_SERVICE_ACCOUNT }}
+        run: |
+          test -n "$GCP_PROJECT_ID"
+          test -n "$GCP_WORKLOAD_IDENTITY_PROVIDER"
+          test -n "$GCP_SERVICE_ACCOUNT"
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT || secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Deploy Firebase Functions
-        run: ./functions/node_modules/.bin/firebase deploy --only functions --project "${{ vars.GCP_PROJECT_ID }}" --force
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
+        run: ./functions/node_modules/.bin/firebase deploy --only functions --project "$GCP_PROJECT_ID" --force
